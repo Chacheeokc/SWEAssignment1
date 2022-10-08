@@ -11,7 +11,8 @@ var fs = require('fs');
 
 //global variable for tweet data
 var tweetinfo = []
-var recentlySearched = "Nothing Has Been Recently Searched";
+//global variable for recently searched data
+var recentlySearched = []
 
 
 //load the input file
@@ -21,6 +22,7 @@ fs.readFile('favs.json', 'utf8', function readFileCallback(err,data){
     throw err;
   }
   else{
+    //Tweetinfo array is filled with data from json file
     tweetinfo = JSON.parse(data);
   }
 });
@@ -30,33 +32,42 @@ fs.readFile('favs.json', 'utf8', function readFileCallback(err,data){
 //Get functions
 //Shows user info
 app.get('/tweets', function(req, res) {
-  //TODO: send all users' IDs
   res.send({ tweets: tweetinfo });
 });
 
 //Shows tweet info
 app.get('/tweetinfo', function(req, res) {
-  //TODO: send tweet info
   res.send({ tweets: tweetinfo})
 });
 
 //Shows searched tweets
 app.get('/searchinfo', function(req, res){
   //TODO: send searched tweets
-  res.send({ recentlySearched })
+  res.send({ tweets: recentlySearched })
 
 });
 
 //Post functions
 //Posts created tweets
 app.post('/tweetinfo', function(req, res) {
-  //TODO: create a tweet.
-  var tweetName = req.body.name;
-  currentId++;
+  //new Tweet info
+  var newTweet = req.body;
+  //Date for the tweets
+  var today = new Date();
+  var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+  var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+  var dateTime = date+' '+time;
 
-  tweets.push({
-      id: currentId,
-      name: tweetName
+  //Push new info into tweetinfo array
+  tweetinfo.push({ 
+      id: newTweet.id,
+      text: newTweet.text,
+      created_at: dateTime,
+      user:{
+        name: "Gabe Chavez",
+        screen_name: 'Beastslayer32',
+        id: 123123
+      }
   });
 
   res.send('Successfully created tweet!');
@@ -65,19 +76,31 @@ app.post('/tweetinfo', function(req, res) {
 //Posts searched tweets
 app.post('/searchinfo', function(req, res) {
   //TODO: search a tweet
+  var id = req.body.tweetid;
+  var found = false;
+  //search for the tweet with a for each loop
+  tweetinfo.forEach(function(tweet, index) {
+    if (!found && tweet.id == Number(id)) {
+        recentlySearched.push(tweet);
+        console.log(tweet);
+    }
+    res.send("Successfully Searched for Tweet!")
+});
+
+
 });
 
 //Update
 app.put('/tweets/:nm', function(req, res) {
   //TODO: update tweets
-  var id = req.params.id;
+  var originalName = req.body.nm;
   var newName = req.body.newName;
 
   var found = false;
-
-  products.forEach(function(product, index) {
-      if (!found && product.id === Number(id)) {
-          product.name = newName;
+  //look for name and update screen_name
+  tweetinfo.forEach(function(tweet, index) {
+      if (!found && tweet.user.name == originalName) {
+          tweet.user.screen_name = newName;
       }
   });
 
@@ -87,12 +110,11 @@ app.put('/tweets/:nm', function(req, res) {
 //Delete 
 app.delete('/tweetinfo/:tweetid', function(req, res) {
   //TODO: delete a tweet
-  var id = req.params.id;
-
+  var id = req.body.tweetid;
   var found = false;
 
-  products.forEach(function(product, index) {
-      if (!found && tweetinfo.id === Number(id)) {
+  tweetinfo.forEach(function(tweet, index) {
+      if (!found && tweet.id == Number(id)) {
           tweetinfo.splice(index, 1);
       }
   });
